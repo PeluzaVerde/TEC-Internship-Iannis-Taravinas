@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ApiApp.Model;
+using Microsoft.EntityFrameworkCore;
 
 namespace Internship.Model
 {
@@ -8,11 +9,12 @@ namespace Internship.Model
         public DbSet<Position> Positions { get; set; }
         public DbSet<Salary> Salaries { get; set; }
         public DbSet<Department> Departments { get; set; }
+        public DbSet<PersonDetails> PersonDetails { get; set; }
         public string DbPath { get; }
 
         public APIDbContext()
         {
-            var path = "D:\\Internship2\\Database\\";
+            var path = "C:\\Users\\Iannis\\TEC-Internship-Iannis-Taravinas\\Database";
             DbPath = System.IO.Path.Join(path, "Internship.db");
         }
 

@@ -9,6 +9,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace WebApp.Controllers
 {
@@ -48,8 +50,13 @@ namespace WebApp.Controllers
         {
             if(ModelState.IsValid)
             {
+                var settings = new JsonSerializerSettings
+                {
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                };
+
                 HttpClient client = new HttpClient();
-                var jsonPerson = JsonConvert.SerializeObject(person);
+                var jsonPerson = JsonConvert.SerializeObject(person,settings);
                 StringContent content = new StringContent(jsonPerson,Encoding.UTF8,"application/json");
                 HttpResponseMessage message = await client.PostAsync("http://localhost:5229/api/persons", content);
                 if(message.IsSuccessStatusCode)
@@ -97,13 +104,47 @@ namespace WebApp.Controllers
                 }
                 else
                 {
+                    ModelState.AddModelError("", "There is an API Error");
                     return View(person);
                 }
             }
             else
                 return View(person);
         }
-     
 
+        public async Task<IActionResult> Delete(int id)
+        {
+            HttpClient client = new HttpClient();
+            var response = await client.GetAsync($"http://localhost:5229/api/persons/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                
+                return RedirectToAction("Index");
+            }
+
+            // Deserialize the person from the response
+            var personJson = await response.Content.ReadAsStringAsync();
+            var person = JsonConvert.DeserializeObject<Person>(personJson);
+
+            return View(person);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            HttpClient client = new HttpClient();
+            var response = await client.DeleteAsync($"http://localhost:5229/api/persons/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                ModelState.AddModelError("", "There is an API Error");
+                return RedirectToAction("Index");
+            }
+        }
     }
+            
 }

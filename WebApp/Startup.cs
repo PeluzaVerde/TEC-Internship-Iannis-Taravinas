@@ -27,6 +27,19 @@ namespace WebApp
         public void ConfigureServices(IServiceCollection services)
         {
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                               .AllowAnyMethod()
+                               .AllowAnyHeader();
+                    });
+            });
+
+            services.AddControllers();
+
             services.AddControllersWithViews();
             services.AddRazorPages();
         }
@@ -50,6 +63,14 @@ namespace WebApp
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseCors("AllowAll");
+            app.Use(async (context, next) =>
+            {
+                Console.WriteLine($"Request: {context.Request.Method} {context.Request.Path}");
+                await next.Invoke();
+                Console.WriteLine($"Response: {context.Response.StatusCode}");
+            });
 
             app.UseEndpoints(endpoints =>
             {

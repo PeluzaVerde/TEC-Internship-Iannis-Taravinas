@@ -1,8 +1,9 @@
-﻿using Internship.Model;
+﻿using ApiApp.Model;
+using Internship.Model;
 using Internship.ObjectModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Internship.Controllers
 {
@@ -37,11 +38,28 @@ namespace Internship.Controllers
 
         }
         [HttpPost]
-        public IActionResult Post(Person person)
+        public IActionResult Post(PersonViewModel personViewModel)
         {
             if (ModelState.IsValid)
             {
+                var person = new Person
+                {
+                    Name = personViewModel.Name,
+                    Surname = personViewModel.Surname,
+                    Age = personViewModel.Age,
+                    Email = personViewModel.Email,
+                    Address = personViewModel.Address,
+                    PositionId = personViewModel.PositionId,
+                    SalaryId = personViewModel.SalaryId
+                };
+
                 var db = new APIDbContext();
+                person.Position = db.Positions.Find(person.PositionId);
+                person.Salary = db.Salaries.Find(person.SalaryId);
+                if (person.Position == null || person.Salary == null)
+                {
+                    return BadRequest("Invalid PositionId or SalaryId");
+                }
                 db.Persons.Add(person);
                 db.SaveChanges();
                 return Created("", person);
@@ -50,7 +68,7 @@ namespace Internship.Controllers
                 return BadRequest();
         }
         [HttpPut]
-        public IActionResult UpdatePerson(Person person)
+        public IActionResult UpdatePerson(PersonViewModel person)
         {
 
             if (ModelState.IsValid)
@@ -63,12 +81,35 @@ namespace Internship.Controllers
                 updateperson.Name = person.Name;
                 updateperson.PositionId = person.PositionId;
                 updateperson.SalaryId = person.SalaryId;
+                updateperson.Position = db.Positions.Find(person.PositionId);
+                updateperson.Salary = db.Salaries.Find(person.SalaryId);
                 updateperson.Surname = person.Surname;
+
+                if(updateperson.Salary == null || updateperson.Position == null)
+                {
+                    return BadRequest();
+                }
                 db.SaveChanges();
                 return NoContent();
             }
             else
                 return BadRequest();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePerson(int id)
+        {
+            var db = new APIDbContext();
+            var person = await db.Persons.FindAsync(id);
+            if (person == null)
+            {
+                return NotFound();
+            }
+
+            db.Persons.Remove(person);
+            await db.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

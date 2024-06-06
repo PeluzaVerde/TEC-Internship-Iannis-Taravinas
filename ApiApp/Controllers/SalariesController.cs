@@ -19,6 +19,22 @@ namespace Internship.Controllers
             return Ok(list);
         }
 
+        [HttpPost]
+        public IActionResult Add(Salary salary)
+        {
+            if (ModelState.IsValid)
+            {
+                var db = new APIDbContext();
+                db.Salaries.Add(salary);
+                db.SaveChanges();
+                return Created("", salary);
+            }
+            else
+            {
+                return BadRequest(ModelState); 
+            }
+        }
+
         [HttpDelete("{Id}")]
         public IActionResult Delete(int Id)
         {
