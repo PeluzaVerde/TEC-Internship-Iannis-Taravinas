@@ -27,6 +27,7 @@ namespace Internship.Model
         public int SalaryId { get; set; }
 
         public Salary Salary { get; set; }
+        public virtual ICollection<PersonDetails> PersonDetails { get; set; }
 
     }
 }

@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using WebApp.Models;
 
@@ -10,11 +12,19 @@ namespace WebApp.Controllers
 {
     public class PersonDetailsController : Controller
     {
+
+        private readonly IConfiguration _config;
+        private readonly string _api;
+        public PersonDetailsController(IConfiguration config)
+        {
+            _config = config;
+            _api = _config.GetValue<string>("ApiSettings:ApiUrl");
+        }
         // GET: PersonDetails
         public async Task<IActionResult> Index()
         {
             HttpClient client = new HttpClient();
-            HttpResponseMessage message = await client.GetAsync("http://localhost:5229/api/personsDetails");
+            HttpResponseMessage message = await client.GetAsync(_api + "personsDetails");
             if (message.IsSuccessStatusCode)
             {
                 var jstring = await message.Content.ReadAsStringAsync();
@@ -25,73 +35,80 @@ namespace WebApp.Controllers
                 return View(new List<PersonDetails>());
         }
 
-        // GET: PersonDetails/Details/5
-        public ActionResult Details(int id)
+
+        public IActionResult Add()
         {
-            return View();
+            PersonDetails personDetails = new PersonDetails();
+            return View(personDetails);
         }
 
-        // GET: PersonDetails/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: PersonDetails/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> Add(PersonDetails personDetails)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var settings = new JsonSerializerSettings
+                {
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    Formatting = Formatting.Indented
+                };
+
+                HttpClient client = new HttpClient();
+                var jsonPerson = JsonConvert.SerializeObject(personDetails, settings);
+                StringContent content = new StringContent(jsonPerson, Encoding.UTF8, "application/json");
+                HttpResponseMessage message = await client.PostAsync(_api + "personsDetails", content);
+                if (message.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "There is an API Error");
+                    return View(personDetails);
+                }
+
             }
-            catch
+            else
             {
-                return View();
+                return View(personDetails);
             }
         }
 
-        // GET: PersonDetails/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<IActionResult> Update(int Id)
         {
-            return View();
+            HttpClient client = new HttpClient();
+            HttpResponseMessage message = await client.GetAsync(_api + "personsDetails/" + Id);
+            if (message.IsSuccessStatusCode)
+            {
+                var jstring = await message.Content.ReadAsStringAsync();
+                PersonDetails personDetails = JsonConvert.DeserializeObject<PersonDetails>(jstring);
+                return View(personDetails);
+            }
+            else
+                return RedirectToAction("Add");
         }
-
-        // POST: PersonDetails/Edit/5
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> Update(PersonDetails personDetails)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                HttpClient client = new HttpClient();
+                var jsonperson = JsonConvert.SerializeObject(personDetails);
+                StringContent content = new StringContent(jsonperson, Encoding.UTF8, "application/json");
+                HttpResponseMessage message = await client.PutAsync(_api + "personsDetails", content);
+                if (message.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "There is an API Error");
+                    return View(personDetails);
+                }
             }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: PersonDetails/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: PersonDetails/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            else
+                return View(personDetails);
         }
     }
 }

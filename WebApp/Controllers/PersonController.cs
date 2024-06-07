@@ -18,19 +18,19 @@ namespace WebApp.Controllers
     {
         //HINT task 8 start
 
-/*        private readonly IConfiguration _config;
+        private readonly IConfiguration _config;
         private readonly string _api;
         public PersonController(IConfiguration config)
         {
             _config = config;
-            _api = _config.GetValue<string>("");
-        }*/
+            _api = _config.GetValue<string>("ApiSettings:ApiUrl");
+        }
 
         //HINT task 8 end
         public async Task<IActionResult> Index()
         {
             HttpClient client = new HttpClient();
-            HttpResponseMessage message = await client.GetAsync("http://localhost:5229/api/persons");
+            HttpResponseMessage message = await client.GetAsync(_api + "persons");
             if(message.IsSuccessStatusCode)
             {
                 var jstring = await message.Content.ReadAsStringAsync();
@@ -58,7 +58,7 @@ namespace WebApp.Controllers
                 HttpClient client = new HttpClient();
                 var jsonPerson = JsonConvert.SerializeObject(person,settings);
                 StringContent content = new StringContent(jsonPerson,Encoding.UTF8,"application/json");
-                HttpResponseMessage message = await client.PostAsync("http://localhost:5229/api/persons", content);
+                HttpResponseMessage message = await client.PostAsync(_api + "persons", content);
                 if(message.IsSuccessStatusCode)
                 {
                     return RedirectToAction("Index");
@@ -79,7 +79,7 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Update(int Id)
         {
             HttpClient client = new HttpClient();
-            HttpResponseMessage message = await client.GetAsync("http://localhost:5229/api/persons/" + Id);
+            HttpResponseMessage message = await client.GetAsync(_api +  "persons/ " + Id);
             if (message.IsSuccessStatusCode)
             {
                 var jstring = await message.Content.ReadAsStringAsync();
@@ -97,7 +97,7 @@ namespace WebApp.Controllers
                 HttpClient client = new HttpClient();
                 var jsonperson = JsonConvert.SerializeObject(person);
                 StringContent content = new StringContent(jsonperson, Encoding.UTF8, "application/json");
-                HttpResponseMessage message = await client.PutAsync("http://localhost:5229/api/persons", content);
+                HttpResponseMessage message = await client.PutAsync(_api + "persons", content);
                 if(message.IsSuccessStatusCode)
                 {
                     return RedirectToAction("Index");
@@ -115,7 +115,7 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             HttpClient client = new HttpClient();
-            var response = await client.GetAsync($"http://localhost:5229/api/persons/{id}");
+            var response = await client.GetAsync($"{_api}persons/{id}");
             if (!response.IsSuccessStatusCode)
             {
                 
@@ -134,7 +134,7 @@ namespace WebApp.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             HttpClient client = new HttpClient();
-            var response = await client.DeleteAsync($"http://localhost:5229/api/persons/{id}");
+            var response = await client.DeleteAsync($"{_api}persons/{id}");
             if (response.IsSuccessStatusCode)
             {
                 return RedirectToAction("Index");

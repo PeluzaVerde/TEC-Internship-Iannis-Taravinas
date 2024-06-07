@@ -62,7 +62,7 @@ namespace Internship.Controllers
                 }
                 db.Persons.Add(person);
                 db.SaveChanges();
-                return Created("", person);
+                return Created();
             }
             else
                 return BadRequest();

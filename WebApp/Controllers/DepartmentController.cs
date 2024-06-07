@@ -13,11 +13,18 @@ namespace WebApp.Controllers
 {
     public class DepartmentController : Controller
     {
+        private readonly IConfiguration _config;
+        private readonly string _api;
+        public DepartmentController(IConfiguration config)
+        {
+            _config = config;
+            _api = _config.GetValue<string>("ApiSettings:ApiUrl");
+        }
         public async Task<IActionResult> Index()
         {
             List<Department> list = new List<Department>();
             HttpClient client = new HttpClient();
-            HttpResponseMessage responseMessage = await client.GetAsync("http://localhost:5229/api/departments");
+            HttpResponseMessage responseMessage = await client.GetAsync(_api + "departments");
 
             if (responseMessage.IsSuccessStatusCode)
             {
@@ -41,7 +48,7 @@ namespace WebApp.Controllers
                 HttpClient client = new HttpClient();
                 var jsondepartment = JsonConvert.SerializeObject(department);
                 StringContent content = new StringContent(jsondepartment, Encoding.UTF8, "application/json");
-                HttpResponseMessage message = await client.PostAsync("http://localhost:5229/api/departments", content);
+                HttpResponseMessage message = await client.PostAsync(_api + "departments", content);
                 if (message.IsSuccessStatusCode)
                 {
                     return RedirectToAction("Index");
@@ -62,7 +69,7 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Update(int Id)
         {
             HttpClient client = new HttpClient();
-            HttpResponseMessage message = await client.GetAsync("http://localhost:5229/api/departments/" + Id);
+            HttpResponseMessage message = await client.GetAsync(_api + "departments/" + Id);
             if(message.IsSuccessStatusCode)
             {
                 var jstring = await message.Content.ReadAsStringAsync();
@@ -80,7 +87,7 @@ namespace WebApp.Controllers
                 HttpClient client = new HttpClient();
                 var jsondepartment = JsonConvert.SerializeObject(department);
                 StringContent content = new StringContent(jsondepartment,Encoding.UTF8,"application/json");
-                HttpResponseMessage message = await client.PutAsync("http://localhost:5229/api/departments", content);
+                HttpResponseMessage message = await client.PutAsync(_api + "departments", content);
                 if (message.IsSuccessStatusCode)
                 {
                     return RedirectToAction("Index");
@@ -90,6 +97,39 @@ namespace WebApp.Controllers
             }
             else
                 return View(department);
+        }
+
+        public async Task<IActionResult> Delete(int id)
+        {
+            HttpClient client = new HttpClient();
+            var response = await client.GetAsync($"{_api}departments/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+
+                return RedirectToAction("Index");
+            }
+
+            var departmentJson = await response.Content.ReadAsStringAsync();
+            var department = JsonConvert.DeserializeObject<Department>(departmentJson);
+
+            return View(department);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            HttpClient client = new HttpClient();
+            var response = await client.DeleteAsync($"{_api}departments/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                ModelState.AddModelError("", "There is an API Error");
+                return RedirectToAction("Index");
+            }
         }
 
     }

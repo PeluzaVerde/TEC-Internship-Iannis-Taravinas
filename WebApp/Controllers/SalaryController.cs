@@ -7,16 +7,24 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace WebApp.Controllers
 {
     public class SalaryController : Controller
     {
+        private readonly IConfiguration _config;
+        private readonly string _api;
+        public SalaryController(IConfiguration config)
+        {
+            _config = config;
+            _api = _config.GetValue<string>("ApiSettings:ApiUrl");
+        }
         public async Task<IActionResult> Index()
         {
             List<Salary> list = new List<Salary>();
             HttpClient client = new HttpClient();
-            HttpResponseMessage message = await client.GetAsync("http://localhost:5229/api/Salaries");
+            HttpResponseMessage message = await client.GetAsync(_api + "Salaries");
             if (message.IsSuccessStatusCode)
             {
                 var jstring = await message.Content.ReadAsStringAsync();
@@ -45,7 +53,7 @@ namespace WebApp.Controllers
                 HttpClient client = new HttpClient();
                 var jsonSalary = JsonConvert.SerializeObject(salary, settings);
                 StringContent content = new StringContent(jsonSalary, Encoding.UTF8, "application/json");
-                HttpResponseMessage message = await client.PostAsync("http://localhost:5229/api/salaries", content);
+                HttpResponseMessage message = await client.PostAsync(_api + "salaries", content);
                 if (message.IsSuccessStatusCode)
                 {
                     return RedirectToAction("Index");
@@ -66,7 +74,7 @@ namespace WebApp.Controllers
         public async Task<IActionResult> Delete(int Id)
         {
             HttpClient client = new HttpClient();
-            HttpResponseMessage message = await client.DeleteAsync("http://localhost:5229/api/Salaries/" + Id);
+            HttpResponseMessage message = await client.DeleteAsync(_api + "Salaries/" + Id);
             if (message.IsSuccessStatusCode)
                 return RedirectToAction("Index");
             else

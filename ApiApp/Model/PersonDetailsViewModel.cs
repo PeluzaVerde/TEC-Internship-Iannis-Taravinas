@@ -2,9 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ApiApp.Model
+namespace WebApp.Models
 {
-    public class PersonDetails
+    public class PersonDetailsViewModel
     {
         [Key]
         public int Id { get; set; }
@@ -13,7 +13,6 @@ namespace ApiApp.Model
         [Required]
         public string PersonCity { get; set; }
         [ForeignKey("Person")]
-        public int PersonId { get; set; } 
-        public virtual Person Person { get; set; }
+        public int PersonId { get; set; }
     }
 }
